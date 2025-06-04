@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>15분 계산 게임</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        h1 {
+            color: #4a5568;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            font-weight: bold;
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            padding: 15px;
+            background: #f7fafc;
+            border-radius: 10px;
+        }
+        
+        .score, .level {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #4a5568;
+        }
+        
+        .question-card {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 25px rgba(72, 187, 120, 0.3);
+        }
+        
+        .question {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .question-text {
+            font-size: 1.3em;
+            margin-bottom: 10px;
+        }
+        
+        .answer-section {
+            margin-bottom: 30px;
+        }
+        
+        .answer-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .answer-btn {
+            padding: 20px;
+            font-size: 1.8em;
+            font-weight: bold;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #e2e8f0;
+            color: #4a5568;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .answer-btn:hover {
+            background: #cbd5e0;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .answer-btn.correct {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            animation: correct 0.6s ease;
+        }
+        
+        .answer-btn.wrong {
+            background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+            color: white;
+            animation: shake 0.6s ease;
+        }
+        
+        @keyframes correct {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        .feedback {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+        }
+        
+        .feedback.correct {
+            background: #c6f6d5;
+            color: #22543d;
+            display: block;
+        }
+        
+        .feedback.wrong {
+            background: #fed7d7;
+            color: #742a2a;
+            display: block;
+        }
+        
+        .next-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            font-size: 1.3em;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: none;
+        }
+        
+        .next-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .next-btn.show {
+            display: inline-block;
+        }
+        
+        .celebration {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 4em;
+            z-index: 1000;
+            display: none;
+            animation: celebrate 1s ease;
+        }
+        
+        @keyframes celebrate {
+            0% { transform: translate(-50%, -50%) scale(0); }
+            50% { transform: translate(-50%, -50%) scale(1.2); }
+            100% { transform: translate(-50%, -50%) scale(1); }
+        }
+        
+        .hint {
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 1.1em;
+            display: none;
+        }
+        
+        .hint.show {
+            display: block;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #e2e8f0;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #48bb78, #38a169);
+            transition: width 0.3s ease;
+        }
+        
+        .game-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        .control-btn {
+            padding: 10px 20px;
+            background: #e2e8f0;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.2s ease;
+        }
+        
+        .control-btn:hover {
+            background: #cbd5e0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 15분 계산 게임</h1>
+        
+        <div class="game-info">
+            <div class="score">점수: <span id="score">0</span></div>
+            <div class="level">레벨: <span id="level">1</span></div>
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+        </div>
+        
+        <div class="question-card">
+            <div class="question-text">행주를 담근 시간</div>
+            <div class="question" id="questionTime">--:--</div>
+            <div class="question-text">15분 후는 언제일까요?</div>
+        </div>
+        
+        <div class="answer-section">
+            <div class="answer-buttons" id="answerButtons">
+                <!-- 답안 버튼들이 여기에 생성됩니다 -->
+            </div>
+            
+            <div class="feedback" id="feedback"></div>
+            
+            <button class="next-btn" id="nextBtn" onclick="nextQuestion()">다음 문제</button>
+        </div>
+        
+        <div class="hint" id="hint">
+            <strong>💡 레벨별 난이도:</strong><br>
+            • 레벨 1: 30분, 15분, 45분 (쉬움)<br>
+            • 레벨 2: 35분, 40분, 50분 (보통)<br>
+            • 레벨 3: 48분, 52분, 47분 (어려움)<br>
+            • 레벨 4: 49분, 56분, 58분 (매우 어려움)<br>
+            • 레벨 5: 57분, 59분 (극한) - 자정 넘나들어요!
+        </div>
+        
+        <div class="game-controls">
+            <button class="control-btn" onclick="showHint()">힌트 보기</button>
+            <button class="control-btn" onclick="resetGame()">게임 다시 시작</button>
+        </div>
+        
+        <div class="celebration" id="celebration">🎉</div>
+    </div>
+
+    <script>
+        let currentQuestion = {};
+        let score = 0;
+        let level = 1;
+        let questionsAnswered = 0;
+        let questionsPerLevel = 3;
+        
+        const easyTimes = [
+            {hour: 9, min: 30}, {hour: 10, min: 15}, {hour: 11, min: 45},
+            {hour: 2, min: 20}, {hour: 3, min: 10}, {hour: 4, min: 25}
+        ];
+        
+        const mediumTimes = [
+            {hour: 9, min: 35}, {hour: 10, min: 40}, {hour: 11, min: 25},
+            {hour: 2, min: 50}, {hour: 3, min: 55}, {hour: 4, min: 35}
+        ];
+        
+        const hardTimes = [
+            {hour: 9, min: 48}, {hour: 10, min: 52}, {hour: 11, min: 47},
+            {hour: 2, min: 53}, {hour: 3, min: 46}, {hour: 4, min: 58}
+        ];
+        
+        const veryHardTimes = [
+            {hour: 14, min: 49}, {hour: 15, min: 56}, {hour: 16, min: 47},
+            {hour: 17, min: 58}, {hour: 18, min: 51}, {hour: 19, min: 54}
+        ];
+        
+        const extremeTimes = [
+            {hour: 21, min: 57}, {hour: 22, min: 59}, {hour: 23, min: 48},
+            {hour: 23, min: 52}, {hour: 23, min: 46}, {hour: 23, min: 58}
+        ];
+        
+        function generateQuestion() {
+            let timePool;
+            
+            switch(level) {
+                case 1:
+                    timePool = easyTimes; // 30분, 15분, 45분 등
+                    break;
+                case 2:
+                    timePool = mediumTimes; // 35분, 40분, 50분 등
+                    break;
+                case 3:
+                    timePool = hardTimes; // 48분, 52분, 47분 등
+                    break;
+                case 4:
+                    timePool = veryHardTimes; // 49분, 56분, 58분 등
+                    break;
+                case 5:
+                    timePool = extremeTimes; // 57분, 59분, 58분 등 (자정 넘나듦)
+                    break;
+                default:
+                    timePool = extremeTimes;
+            }
+            
+            const randomTime = timePool[Math.floor(Math.random() * timePool.length)];
+            
+            // 정답 계산
+            let answerHour = randomTime.hour;
+            let answerMin = randomTime.min + 15;
+            
+            if (answerMin >= 60) {
+                answerHour += 1;
+                answerMin -= 60;
+            }
+            
+            if (answerHour >= 24) {
+                answerHour -= 24;
+            }
+            
+            currentQuestion = {
+                time: randomTime,
+                answer: {hour: answerHour, min: answerMin}
+            };
+            
+            // 문제 표시
+            document.getElementById('questionTime').textContent = 
+                `${randomTime.hour.toString().padStart(2, '0')}:${randomTime.min.toString().padStart(2, '0')}`;
+            
+            generateAnswerChoices();
+        }
+        
+        function generateAnswerChoices() {
+            const correctAnswer = currentQuestion.answer;
+            const choices = [correctAnswer];
+            
+            // 오답 생성
+            while (choices.length < 4) {
+                let wrongHour = correctAnswer.hour + Math.floor(Math.random() * 3) - 1;
+                let wrongMin = correctAnswer.min + Math.floor(Math.random() * 20) - 10;
+                
+                if (wrongMin < 0) {
+                    wrongMin += 60;
+                    wrongHour -= 1;
+                }
+                if (wrongMin >= 60) {
+                    wrongMin -= 60;
+                    wrongHour += 1;
+                }
+                if (wrongHour < 0) wrongHour += 24;
+                if (wrongHour >= 24) wrongHour -= 24;
+                
+                const wrongAnswer = {hour: wrongHour, min: wrongMin};
+                
+                // 중복 검사
+                if (!choices.some(choice => 
+                    choice.hour === wrongAnswer.hour && choice.min === wrongAnswer.min)) {
+                    choices.push(wrongAnswer);
+                }
+            }
+            
+            // 선택지 섞기
+            for (let i = choices.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [choices[i], choices[j]] = [choices[j], choices[i]];
+            }
+            
+            // 버튼 생성
+            const buttonsContainer = document.getElementById('answerButtons');
+            buttonsContainer.innerHTML = '';
+            
+            choices.forEach((choice, index) => {
+                const button = document.createElement('button');
+                button.className = 'answer-btn';
+                button.textContent = `${choice.hour.toString().padStart(2, '0')}:${choice.min.toString().padStart(2, '0')}`;
+                button.onclick = () => checkAnswer(choice, button);
+                buttonsContainer.appendChild(button);
+            });
+        }
+        
+        function checkAnswer(selectedAnswer, buttonElement) {
+            const isCorrect = selectedAnswer.hour === currentQuestion.answer.hour && 
+                             selectedAnswer.min === currentQuestion.answer.min;
+            
+            // 모든 버튼 비활성화
+            document.querySelectorAll('.answer-btn').forEach(btn => {
+                btn.onclick = null;
+                if (btn === buttonElement) {
+                    btn.classList.add(isCorrect ? 'correct' : 'wrong');
+                }
+                // 정답 버튼 표시
+                if (btn.textContent === `${currentQuestion.answer.hour.toString().padStart(2, '0')}:${currentQuestion.answer.min.toString().padStart(2, '0')}`) {
+                    btn.classList.add('correct');
+                }
+            });
+            
+            // 피드백 표시
+            const feedback = document.getElementById('feedback');
+            const celebration = document.getElementById('celebration');
+            
+            if (isCorrect) {
+                feedback.textContent = '정답입니다! 🎉';
+                feedback.className = 'feedback correct';
+                score += 10 * level;
+                celebration.style.display = 'block';
+                celebration.textContent = ['🎉', '🌟', '👏', '🥳'][Math.floor(Math.random() * 4)];
+                setTimeout(() => {
+                    celebration.style.display = 'none';
+                }, 500);
+                
+                // 정답이면 1초 후 자동으로 다음 문제
+                setTimeout(() => {
+                    nextQuestion();
+                }, 1000);
+            } else {
+                feedback.textContent = `틀렸어요! 정답은 ${currentQuestion.answer.hour.toString().padStart(2, '0')}:${currentQuestion.answer.min.toString().padStart(2, '0')}입니다.`;
+                feedback.className = 'feedback wrong';
+                
+                // 틀렸을 때는 다음 버튼 표시
+                document.getElementById('nextBtn').classList.add('show');
+            }
+            
+            // 점수 업데이트
+            document.getElementById('score').textContent = score;
+            
+            questionsAnswered++;
+            updateProgress();
+            
+            // 레벨업 체크 (즉시)
+            if (questionsAnswered >= questionsPerLevel) {
+                if (level < 5) {
+                    level++;
+                    questionsAnswered = 0;
+                    document.getElementById('level').textContent = level;
+                    
+                    // 레벨업 축하
+                    celebration.textContent = `레벨 ${level} 달성! 🚀`;
+                    celebration.style.display = 'block';
+                    setTimeout(() => {
+                        celebration.style.display = 'none';
+                    }, 1500);
+                } else {
+                    // 게임 클리어!
+                    celebration.textContent = `🏆 게임 클리어! 🏆`;
+                    celebration.style.display = 'block';
+                    celebration.style.fontSize = '3em';
+                    celebration.style.background = 'linear-gradient(45deg, #FFD700, #FFA500)';
+                    celebration.style.padding = '20px';
+                    celebration.style.borderRadius = '15px';
+                    celebration.style.color = '#fff';
+                    celebration.style.textShadow = '2px 2px 4px rgba(0,0,0,0.5)';
+                    
+                    setTimeout(() => {
+                        alert('축하합니다! 모든 레벨을 클리어했습니다! 🎉\n이제 15분 계산의 달인이 되셨네요!');
+                        resetGame();
+                    }, 2000);
+                }
+            }
+        }
+        
+        function nextQuestion() {
+            // 피드백 숨기기
+            document.getElementById('feedback').className = 'feedback';
+            document.getElementById('nextBtn').classList.remove('show');
+            document.getElementById('hint').classList.remove('show');
+            
+            updateProgress();
+            generateQuestion();
+        }
+        
+        function updateProgress() {
+            const progress = (questionsAnswered / questionsPerLevel) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+        
+        function showHint() {
+            document.getElementById('hint').classList.add('show');
+        }
+        
+        function resetGame() {
+            score = 0;
+            level = 1;
+            questionsAnswered = 0;
+            document.getElementById('score').textContent = score;
+            document.getElementById('level').textContent = level;
+            document.getElementById('feedback').className = 'feedback';
+            document.getElementById('nextBtn').classList.remove('show');
+            document.getElementById('hint').classList.remove('show');
+            updateProgress();
+            generateQuestion();
+        }
+        
+        // 게임 시작
+        generateQuestion();
+        updateProgress();
+    </script>
+</body>
+</html>
